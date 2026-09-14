@@ -1,1 +1,49 @@
-{"flutter":{"platforms":{"android":{"default":{"projectId":"decide-app-rusito","appId":"1:899335110338:android:c9ce63aeec98153524055b","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"decide-app-rusito","configurations":{"android":"1:899335110338:android:c9ce63aeec98153524055b","ios":"1:899335110338:ios:c715626c429bf69d24055b","web":"1:899335110338:web:cac25d3b25035b7c24055b"}}}}}}
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "decide-app-rusito",
+          "appId": "1:899335110338:android:c9ce63aeec98153524055b",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "decide-app-rusito",
+          "configurations": {
+            "android": "1:899335110338:android:c9ce63aeec98153524055b",
+            "ios": "1:899335110338:ios:c715626c429bf69d24055b",
+            "web": "1:899335110338:web:cac25d3b25035b7c24055b"
+          }
+        }
+      }
+    }
+  },
+  "firestore": {
+    "database": "(default)",
+    "location": "nam5",
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  },
+  "functions": [
+    {
+      "source": "functions",
+      "codebase": "default",
+      "ignore": [
+        "node_modules",
+        ".git",
+        "firebase-debug.log",
+        "firebase-debug.*.log",
+        "*.local"
+      ]
+    }
+  ],
+  "emulators": {
+    "auth": { "port": 9099 },
+    "functions": { "port": 5001 },
+    "firestore": { "port": 8080 },
+    "ui": { "enabled": true },
+    "singleProject": true
+  }
+}

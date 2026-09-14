@@ -1,0 +1,148 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // Compara un mapa de datos ignorando un conjunto de campos "protegidos"
+    // (contadores que solo Cloud Functions, vía Admin SDK, pueden tocar).
+    function unchanged(field) {
+      return !(field in request.resource.data) ||
+             (field in resource.data && request.resource.data[field] == resource.data[field]);
+    }
+
+    // ---------- users ----------
+    match /users/{userId} {
+      allow read: if true;
+      allow create: if isOwner(userId)
+                    && request.resource.data.followersCount == 0
+                    && request.resource.data.followingCount == 0
+                    && request.resource.data.decisionsCount == 0;
+      allow update: if isOwner(userId)
+                    && unchanged('followersCount')
+                    && unchanged('followingCount')
+                    && unchanged('decisionsCount');
+      allow delete: if false;
+
+      // Lista privada de usuarios bloqueados por el dueño del perfil.
+      match /blocks/{blockedUserId} {
+        allow read, create, delete: if isOwner(userId);
+        allow update: if false;
+      }
+    }
+
+    // ---------- categories ----------
+    match /categories/{categoryId} {
+      allow read: if true;
+      allow write: if false; // se cargan con un script de administración
+    }
+
+    // ---------- decisions ----------
+    match /decisions/{decisionId} {
+      allow read: if true;
+      allow create: if isSignedIn()
+                    && request.resource.data.authorId == request.auth.uid
+                    && request.resource.data.voteCount == 0
+                    && request.resource.data.likeCount == 0
+                    && request.resource.data.commentCount == 0
+                    && request.resource.data.shareCount == 0;
+      allow update: if isOwner(resource.data.authorId)
+                    && unchanged('authorId')
+                    && unchanged('voteCount')
+                    && unchanged('likeCount')
+                    && unchanged('commentCount')
+                    && unchanged('shareCount');
+      allow delete: if isOwner(resource.data.authorId);
+
+      match /options/{optionId} {
+        allow read: if true;
+        allow create: if isSignedIn()
+                      && get(/databases/$(database)/documents/decisions/$(decisionId)).data.authorId == request.auth.uid
+                      && request.resource.data.voteCount == 0;
+        allow update: if false; // el voteCount solo lo tocan Cloud Functions
+        allow delete: if isSignedIn()
+                      && get(/databases/$(database)/documents/decisions/$(decisionId)).data.authorId == request.auth.uid;
+      }
+    }
+
+    // ---------- votes ----------
+    // ID del documento: "{userId}_{decisionId}" -> si ya existe, Firestore lo
+    // trata como "update" y la regla de abajo lo rechaza. Así se garantiza
+    // "1 usuario, 1 voto, 1 decisión" en el backend, no solo en la app.
+    match /votes/{voteId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn()
+                    && request.resource.data.userId == request.auth.uid
+                    && voteId == request.auth.uid + '_' + request.resource.data.decisionId;
+      allow update, delete: if false;
+    }
+
+    // ---------- likes ----------
+    // ID del documento: "{userId}_{decisionId}", mismo mecanismo que votes.
+    match /likes/{likeId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn()
+                    && request.resource.data.userId == request.auth.uid
+                    && likeId == request.auth.uid + '_' + request.resource.data.decisionId;
+      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow update: if false;
+    }
+
+    // ---------- saves ----------
+    // ID del documento: "{userId}_{decisionId}".
+    match /saves/{saveId} {
+      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn()
+                    && request.resource.data.userId == request.auth.uid
+                    && saveId == request.auth.uid + '_' + request.resource.data.decisionId;
+      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow update: if false;
+    }
+
+    // ---------- follows ----------
+    // ID del documento: "{followerId}_{followingId}".
+    match /follows/{followId} {
+      allow read: if true;
+      allow create: if isSignedIn()
+                    && request.resource.data.followerId == request.auth.uid
+                    && request.resource.data.followerId != request.resource.data.followingId
+                    && followId == request.auth.uid + '_' + request.resource.data.followingId;
+      allow delete: if isSignedIn() && resource.data.followerId == request.auth.uid;
+      allow update: if false;
+    }
+
+    // ---------- comments ----------
+    match /comments/{commentId} {
+      allow read: if true;
+      allow create: if isSignedIn() && request.resource.data.authorId == request.auth.uid;
+      allow delete: if isSignedIn() && resource.data.authorId == request.auth.uid;
+      allow update: if false; // sin edición, mantenerlos simples
+    }
+
+    // ---------- likes sobre comentarios (opcional, fuera del MVP inicial) ----------
+
+    // ---------- notifications ----------
+    // Las crean únicamente las Cloud Functions (Admin SDK, no pasa por estas reglas).
+    match /notifications/{notificationId} {
+      allow read: if isSignedIn() && resource.data.recipientId == request.auth.uid;
+      allow create, delete: if false;
+      allow update: if isSignedIn()
+                    && resource.data.recipientId == request.auth.uid
+                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read']);
+    }
+
+    // ---------- reports ----------
+    match /reports/{reportId} {
+      allow read: if isSignedIn() && resource.data.reporterId == request.auth.uid;
+      allow create: if isSignedIn() && request.resource.data.reporterId == request.auth.uid;
+      allow update, delete: if false; // moderación se maneja server-side (Fase 9)
+    }
+  }
+}

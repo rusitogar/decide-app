@@ -64,12 +64,44 @@ features/       auth, users, decisions, feed, comments, social, notifications,
 Estado: Riverpod. Navegación: go_router (ruta `/decision/:id` ya preparada para el
 deep link de compartir).
 
+## Backend (Firestore) — Fase 1
+
+Plan Firebase: **Spark (gratuito)**, todavía sin Blaze. Esto condiciona el diseño:
+
+- **Contadores (votos/likes/comentarios por decisión, followers/following por usuario):**
+  NO se guardan como campo denormalizado actualizado por trigger. Se calculan con
+  consultas de agregación `count()` de Firestore al momento de mostrarlos (funciona en
+  el plan gratuito, sin necesidad de Cloud Functions, y no se puede falsificar porque
+  cuenta documentos reales). Cuando se construya la capa de datos de cada feature
+  (Fase 4/5/6), usar `count()` para estos números, no leer un campo `voteCount` guardado.
+- **Notificaciones automáticas** ("alguien votó/comentó/te siguió"): pendientes.
+  Requieren Cloud Functions (ver abajo) porque generarlas desde el cliente sin
+  validación de servidor permitiría notificaciones falsas/spam. Se activan cuando
+  se pase a Blaze.
+- `functions/index.js` ya tiene escritas las Cloud Functions completas (contadores +
+  notificaciones + creación automática de perfil al registrarse) pero **no están
+  desplegadas** — falta que el usuario active el plan Blaze en la consola de Firebase
+  (gratis en la práctica para este volumen, pero pide tarjeta). Cuando lo active:
+  recordarle configurar Budget Alerts (alerta de presupuesto) como resguardo, y correr
+  `firebase deploy --only functions`.
+- Colecciones creadas: `users`, `decisions` (+ subcolección `options`), `votes`,
+  `comments`, `follows`, `likes`, `saves`, `notifications`, `reports`, `categories`.
+  IDs deterministas para evitar duplicados: `votes/{userId}_{decisionId}`,
+  `likes/{userId}_{decisionId}`, `saves/{userId}_{decisionId}`,
+  `follows/{followerId}_{followingId}`.
+- `firestore.rules` y `firestore.indexes.json` ya desplegados a producción.
+- `categories` ya tiene las 12 categorías del doc de scope cargadas (sembradas con un
+  script puntual, no versionado — ver el mensaje del commit de la Fase 1 si hace falta
+  repetirlo).
+
 ## Estado actual
 
-Fase 0 completa (2026-09-13): proyecto Flutter compilando, estructura de carpetas,
-Firebase conectado, Result/Failure, logger, tema base, router, git inicializado.
-Ninguna funcionalidad de producto implementada todavía — sigue la Fase 1 (backend:
-colecciones de Firestore, security rules, Cloud Functions).
+Fase 0 y Fase 1 completas (2026-09-13): proyecto Flutter compilando, estructura de
+carpetas, Firebase conectado, Result/Failure, logger, tema base, router, git
+inicializado, Firestore con reglas/índices desplegados y categorías cargadas. Cloud
+Functions escritas pero pendientes de desplegar (falta activar Blaze). Ninguna
+funcionalidad de producto implementada todavía en la app Flutter — sigue la Fase 2
+(autenticación).
 
 ## Git
 
