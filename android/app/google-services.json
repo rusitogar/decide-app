@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "899335110338",
+    "project_id": "decide-app-rusito",
+    "storage_bucket": "decide-app-rusito.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:899335110338:android:c9ce63aeec98153524055b",
+        "android_client_info": {
+          "package_name": "com.tuempresa.decide"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC5KFAG-9iJVdNKO1DiR6MzAJnikq68cHw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
