@@ -2,13 +2,25 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../features/auth/presentation/screens/auth_gate.dart';
+import '../../features/auth/presentation/screens/forgot_password_screen.dart';
+import '../../features/auth/presentation/screens/sign_up_screen.dart';
+
 final goRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     initialLocation: '/',
     routes: [
       GoRoute(
         path: '/',
-        builder: (context, state) => const _HomePlaceholderScreen(),
+        builder: (context, state) => const AuthGate(),
+      ),
+      GoRoute(
+        path: '/register',
+        builder: (context, state) => const SignUpScreen(),
+      ),
+      GoRoute(
+        path: '/forgot-password',
+        builder: (context, state) => const ForgotPasswordScreen(),
       ),
       // Ruta usada para deep links de compartir: decide://decision/{id}
       // y https://decide.app/decision/{id} (Android App Links / iOS Universal Links).
@@ -21,17 +33,6 @@ final goRouterProvider = Provider<GoRouter>((ref) {
     ],
   );
 });
-
-class _HomePlaceholderScreen extends StatelessWidget {
-  const _HomePlaceholderScreen();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(child: Text('DECIDE')),
-    );
-  }
-}
 
 class _DecisionPlaceholderScreen extends StatelessWidget {
   const _DecisionPlaceholderScreen({required this.id});

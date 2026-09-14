@@ -94,14 +94,44 @@ Plan Firebase: **Spark (gratuito)**, todavía sin Blaze. Esto condiciona el dise
   script puntual, no versionado — ver el mensaje del commit de la Fase 1 si hace falta
   repetirlo).
 
+## Auth — Fase 2
+
+Implementado con Firebase Authentication (Email/Password, activado en la consola).
+Feature completa en `lib/features/auth/`: registro, login, logout, recuperación de
+contraseña, persistencia de sesión (maneja sola vía `authStateChanges()`).
+
+- `AuthGate` (en `presentation/screens/auth_gate.dart`) es el widget en la ruta `/`:
+  muestra `SignInScreen` o `HomeScreen` según el estado de sesión, sin redirects de
+  go_router — más simple y evita condiciones de carrera con la restauración de sesión.
+- Al registrarse, `AuthRepositoryImpl.signUp` crea también el doc `users/{uid}` en
+  Firestore desde el cliente (ver el TODO en ese archivo) — esto se hace desde la app
+  porque la Cloud Function `onAuthUserCreate` que haría lo mismo en el servidor todavía
+  no está desplegada (pendiente de Blaze, ver sección de Fase 1 arriba).
+- Errores de Firebase Auth mapeados a mensajes en español en
+  `data/auth_failure_mapper.dart`.
+- Probado manualmente end-to-end contra el proyecto Firebase real (no el emulador):
+  registro, logout, login, y persistencia de sesión al recargar — los 4 funcionan.
+  Quedó una cuenta de prueba (`prueba.decide@example.com`) en Firebase Auth + su doc
+  en Firestore; borrarla desde la consola si se quiere un proyecto limpio antes de la
+  beta.
+
+## Cómo previsualizar la app
+
+`.claude/launch.json` en este proyecto define `decide-web` (Flutter en modo
+web-server, puerto 8765) para abrir con el Browser pane de Claude Code. Para correrla
+manualmente:
+
+```
+& "C:\Users\gar_e\Desktop\flutter\bin\flutter.bat" run -d web-server --web-port 8765
+```
+
+y abrir `http://localhost:8765`. Para probar en el celular todavía falta terminar el
+setup del SDK de Android (ver sección Toolchain).
+
 ## Estado actual
 
-Fase 0 y Fase 1 completas (2026-09-13): proyecto Flutter compilando, estructura de
-carpetas, Firebase conectado, Result/Failure, logger, tema base, router, git
-inicializado, Firestore con reglas/índices desplegados y categorías cargadas. Cloud
-Functions escritas pero pendientes de desplegar (falta activar Blaze). Ninguna
-funcionalidad de producto implementada todavía en la app Flutter — sigue la Fase 2
-(autenticación).
+Fases 0, 1 y 2 completas (2026-09-13). Sigue la Fase 3 (Perfil de usuario: ver/editar
+perfil, avatar, followers/following, follow/unfollow).
 
 ## Git
 
