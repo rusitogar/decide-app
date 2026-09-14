@@ -5,6 +5,7 @@ import '../../features/auth/presentation/screens/auth_gate.dart';
 import '../../features/auth/presentation/screens/forgot_password_screen.dart';
 import '../../features/auth/presentation/screens/sign_up_screen.dart';
 import '../../features/decisions/presentation/screens/create_decision_screen.dart';
+import '../../features/discover/presentation/screens/discover_screen.dart';
 import '../../features/decisions/presentation/screens/decision_detail_screen.dart';
 import '../../features/decisions/presentation/screens/edit_decision_screen.dart';
 import '../../features/decisions/presentation/screens/user_decisions_screen.dart';
@@ -45,6 +46,10 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/decisions/create',
         builder: (context, state) => const CreateDecisionScreen(),
+      ),
+      GoRoute(
+        path: '/discover',
+        builder: (context, state) => const DiscoverScreen(),
       ),
       GoRoute(
         path: '/saved/:uid',
