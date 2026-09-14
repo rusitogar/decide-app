@@ -8,6 +8,8 @@ import '../../features/decisions/presentation/screens/create_decision_screen.dar
 import '../../features/decisions/presentation/screens/decision_detail_screen.dart';
 import '../../features/decisions/presentation/screens/edit_decision_screen.dart';
 import '../../features/decisions/presentation/screens/user_decisions_screen.dart';
+import '../../features/moderation/presentation/screens/blocked_users_screen.dart';
+import '../../features/notifications/presentation/screens/notifications_screen.dart';
 import '../../features/social/presentation/screens/saved_decisions_screen.dart';
 import '../../features/users/presentation/screens/edit_profile_screen.dart';
 import '../../features/users/presentation/screens/profile_screen.dart';
@@ -47,6 +49,14 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/saved/:uid',
         builder: (context, state) => SavedDecisionsScreen(userId: state.pathParameters['uid']!),
+      ),
+      GoRoute(
+        path: '/blocked/:uid',
+        builder: (context, state) => BlockedUsersScreen(ownerUid: state.pathParameters['uid']!),
+      ),
+      GoRoute(
+        path: '/notifications/:uid',
+        builder: (context, state) => NotificationsScreen(userId: state.pathParameters['uid']!),
       ),
       // Ruta usada para deep links de compartir: decide://decision/{id}
       // y https://decide.app/decision/{id} (Android App Links / iOS Universal Links).

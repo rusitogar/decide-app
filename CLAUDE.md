@@ -141,6 +141,68 @@ contraseña, persistencia de sesión (maneja sola vía `authStateChanges()`).
   para que se actualicen al instante — si a futuro se agrega otra acción que cambie
   estos números, hay que invalidar ese provider también.
 
+## Decisiones, votación, feed y moderación — Fases 4 a 9
+
+- **`lib/features/decisions/`** (Fase 4/5): crear (título, descripción opcional,
+  categoría, 2-5 opciones, fecha de cierre opcional; sin imagen todavía — Storage
+  pendiente de Blaze igual que el avatar), ver, editar (solo título/descripción/
+  categoría/cierre — las opciones quedan fijas una vez creada la decisión, no se
+  pueden editar) y eliminar. `/decision/:id` es la pantalla real (reemplazó el
+  placeholder de la Fase 0).
+  - Votación (`vote_repository.dart`/`voting_section.dart`): un voto por usuario
+    por decisión ya garantizado por las reglas desde la Fase 1
+    (`votes/{userId}_{decisionId}`). Resultados con porcentaje, ganador destacado y
+    "tu voto" resaltado, todo calculado con `count()` en vivo.
+  - **Bug de reglas ya corregido**: crear la decisión y sus opciones en un mismo
+    `batch` fallaba porque la regla de creación de `options` usaba `get()` para
+    leer el `authorId` del documento padre — pero ese padre todavía no existe en el
+    momento en que se evalúa esa regla dentro del mismo batch (un `WriteBatch` no
+    es como un `runTransaction`: los `get()` en las reglas no ven los otros writes
+    del mismo batch). Se solucionó guardando el `authorId` directamente en cada
+    documento de `options` en vez de leerlo del padre.
+  - El contador de "Decisiones" del perfil es clickeable → `/profile/:uid/decisions`
+    (lista simple), la única forma de descubrir las decisiones de alguien aparte
+    del feed.
+- **`lib/features/comments/`** (Fase 6): crear, listar, borrar solo el propio
+  comentario. Sin respuestas anidadas, menciones ni GIFs (así lo pide el doc).
+- **`lib/features/social/`** ampliado (Fase 6): likes y guardados, mismo patrón que
+  follow (ID determinista `{userId}_{decisionId}`, ya cubierto por las reglas de la
+  Fase 1). Compartir usa `share_plus` con el deep link
+  `https://decide.app/decision/{id}` + evento `decision_shared` en Firebase
+  Analytics. Pantalla "Guardados" en `/saved/:uid`.
+- **`lib/features/feed/`** (Fase 7): Home ahora muestra el feed real (antes solo
+  tenía un texto de placeholder), con 3 pestañas + chips de categoría:
+  - **Para vos**: orden cronológico (el doc permite esto como punto de partida,
+    sin algoritmo de recomendación).
+  - **Tendencias**: toma las últimas ~20 decisiones y las reordena client-side por
+    actividad (votos+likes+comentarios sumados). Es una aproximación deliberada:
+    sin contadores denormalizados (pendiente de Blaze) no se puede ordenar por
+    popularidad de forma barata en un catálogo grande, pero alcanza para el
+    volumen de la beta privada (10-500 usuarios, sección 10 del doc). Si el
+    catálogo crece mucho antes de tener Blaze, esto va a haber que revisarlo.
+  - **Siguiendo**: usa `whereIn` sobre los autores seguidos (tope de 30).
+- **`lib/features/moderation/`** (Fase 9): reportar (decisión/comentario/usuario,
+  con un mismo diálogo genérico `report_dialog.dart`) y bloquear/desbloquear
+  usuarios (`users/{uid}/blocks/{blockedUid}`, ya existía la regla desde la Fase
+  1). Pantalla de administración simple en `/blocked/:uid`. **Nota de alcance**:
+  bloquear a alguien NO filtra su contenido del feed/comentarios todavía — el doc
+  de scope no lo exige explícitamente para el MVP, solo pide que la relación de
+  bloqueo exista y sea gestionable. Si se quiere ese filtrado más adelante, hay
+  que tocar `FeedRepositoryImpl` y `CommentRepositoryImpl`.
+- **`lib/features/notifications/`** (Fase 8, PARCIAL): el centro de notificaciones
+  (pantalla `/notifications/:uid`, marcar como leído) está construido y andando,
+  pero **va a estar siempre vacío** hasta que se active Blaze: nada escribe
+  todavía en la colección `notifications` porque eso lo hacen las Cloud Functions
+  `onVoteCreated`/`onCommentCreated`/`onFollowCreated` en `functions/index.js`,
+  que ya están escritas pero no desplegadas (ver sección de Fase 1). Cuando se
+  active Blaze y se corra `firebase deploy --only functions`, esta pantalla
+  empieza a mostrar contenido real sin tocar nada del cliente.
+
+Con esto, las fases 0 a 9 del documento de scope están implementadas y probadas a
+mano en Chrome contra el proyecto Firebase real (no el emulador), salvo la parte de
+Fase 8 que depende de Blaze. Las fases 10 y 11 (Beta privada, MVP público) son de
+proceso/lanzamiento, no de código.
+
 ## Cómo previsualizar la app
 
 `.claude/launch.json` en este proyecto define `decide-web` (Flutter en modo
@@ -168,8 +230,15 @@ sección Toolchain).
 
 ## Estado actual
 
-Fases 0, 1, 2 y 3 completas (2026-09-14). Sigue la Fase 4 (Decisiones: crear, editar,
-eliminar, publicar, ver, categorías, opciones 2-5, imagen opcional, fecha de cierre).
+Fases 0 a 9 completas (2026-09-14), todas probadas a mano en Chrome contra el
+proyecto Firebase real. Pendiente real: activar Blaze (desbloquea Cloud Functions
+—notificaciones automáticas y contadores denormalizados— y Firebase Storage —fotos
+de avatar/decisión/opción—) y terminar el setup del SDK de Android para probar en
+el celular. Ninguna de las dos cosas requiere rehacer código ya escrito.
+
+Lo que sigue del documento de scope son las Fases 10 y 11 (Beta privada, MVP
+público) — son de proceso/lanzamiento (conseguir testers, monitorear, publicar de a
+poco), no de código.
 
 ## Git
 

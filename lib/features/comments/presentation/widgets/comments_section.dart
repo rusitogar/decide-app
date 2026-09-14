@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../moderation/domain/repositories/moderation_repository.dart';
+import '../../../moderation/presentation/widgets/report_dialog.dart';
 import '../../../users/presentation/providers/user_providers.dart';
 import '../../../users/presentation/widgets/user_avatar.dart';
 import '../../domain/entities/comment.dart';
@@ -135,6 +137,18 @@ class _CommentTile extends ConsumerWidget {
             IconButton(
               icon: const Icon(Icons.delete_outline, size: 18),
               onPressed: () => ref.read(commentControllerProvider.notifier).delete(comment.id),
+            )
+          else if (currentUid != null)
+            IconButton(
+              icon: const Icon(Icons.flag_outlined, size: 18),
+              tooltip: 'Reportar',
+              onPressed: () => showReportDialog(
+                context,
+                ref,
+                reporterId: currentUid!,
+                targetType: ReportTargetType.comment,
+                targetId: comment.id,
+              ),
             ),
         ],
       ),

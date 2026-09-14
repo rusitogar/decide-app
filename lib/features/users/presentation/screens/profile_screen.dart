@@ -3,6 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../../moderation/domain/repositories/moderation_repository.dart';
+import '../../../moderation/presentation/widgets/block_button.dart';
+import '../../../moderation/presentation/widgets/report_dialog.dart';
 import '../../../social/presentation/widgets/follow_button.dart';
 import '../providers/user_providers.dart';
 import '../widgets/user_avatar.dart';
@@ -28,6 +31,29 @@ class ProfileScreen extends ConsumerWidget {
               icon: const Icon(Icons.edit_outlined),
               tooltip: 'Editar perfil',
               onPressed: () => context.push('/profile/edit'),
+            ),
+          if (isOwnProfile)
+            IconButton(
+              icon: const Icon(Icons.block_outlined),
+              tooltip: 'Usuarios bloqueados',
+              onPressed: () => context.push('/blocked/$uid'),
+            ),
+          if (!isOwnProfile && currentUid != null)
+            PopupMenuButton<String>(
+              onSelected: (value) {
+                if (value == 'report') {
+                  showReportDialog(
+                    context,
+                    ref,
+                    reporterId: currentUid,
+                    targetType: ReportTargetType.user,
+                    targetId: uid,
+                  );
+                }
+              },
+              itemBuilder: (context) => const [
+                PopupMenuItem(value: 'report', child: Text('Reportar usuario')),
+              ],
             ),
         ],
       ),
@@ -76,6 +102,7 @@ class ProfileScreen extends ConsumerWidget {
                   if (!isOwnProfile && currentUid != null) ...[
                     const SizedBox(height: 20),
                     FollowButton(currentUid: currentUid, targetUid: uid),
+                    BlockButton(ownerUid: currentUid, blockedUid: uid),
                   ],
                 ],
               ),

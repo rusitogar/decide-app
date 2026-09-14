@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../comments/presentation/widgets/comments_section.dart';
+import '../../../moderation/domain/repositories/moderation_repository.dart';
+import '../../../moderation/presentation/widgets/report_dialog.dart';
 import '../../../social/presentation/widgets/like_button.dart';
 import '../../../social/presentation/widgets/save_button.dart';
 import '../../../social/presentation/widgets/share_button.dart';
@@ -48,7 +50,28 @@ class DecisionDetailScreen extends ConsumerWidget {
     final currentUid = ref.watch(authRepositoryProvider).currentUser?.uid;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Decisión')),
+      appBar: AppBar(
+        title: const Text('Decisión'),
+        actions: [
+          if (currentUid != null)
+            PopupMenuButton<String>(
+              onSelected: (value) {
+                if (value == 'report') {
+                  showReportDialog(
+                    context,
+                    ref,
+                    reporterId: currentUid,
+                    targetType: ReportTargetType.decision,
+                    targetId: id,
+                  );
+                }
+              },
+              itemBuilder: (context) => const [
+                PopupMenuItem(value: 'report', child: Text('Reportar decisión')),
+              ],
+            ),
+        ],
+      ),
       body: decisionAsync.when(
         data: (decision) {
           if (decision == null) {
