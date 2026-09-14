@@ -23,6 +23,10 @@ class _FakeAuthRepository implements AuthRepository {
       throw UnimplementedError();
 
   @override
+  Future<Result<AppUser?>> signInWithOAuth(OAuthProviderType provider) async =>
+      throw UnimplementedError();
+
+  @override
   Future<Result<void>> signOut() async => const Result.success(null);
 
   @override

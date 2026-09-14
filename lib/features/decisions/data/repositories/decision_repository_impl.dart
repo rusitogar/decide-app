@@ -34,6 +34,7 @@ class DecisionRepositoryImpl implements DecisionRepository {
       id: doc.id,
       text: data['text'] as String? ?? '',
       imageUrl: data['imageUrl'] as String? ?? '',
+      link: data['link'] as String? ?? '',
       order: data['order'] as int? ?? 0,
     );
   }
@@ -57,17 +58,20 @@ class DecisionRepositoryImpl implements DecisionRepository {
     required String title,
     required String description,
     required String category,
-    required List<String> optionTexts,
+    required List<({String text, String link})> options,
     DateTime? closesAt,
   }) async {
     if (title.trim().isEmpty) {
       return const Result.failure(ValidationFailure('El título es obligatorio.'));
     }
-    if (optionTexts.length < 2 || optionTexts.length > 5) {
+    if (options.length < 2 || options.length > 5) {
       return const Result.failure(ValidationFailure('Tiene que haber entre 2 y 5 opciones.'));
     }
-    if (optionTexts.any((t) => t.trim().isEmpty)) {
+    if (options.any((o) => o.text.trim().isEmpty)) {
       return const Result.failure(ValidationFailure('Todas las opciones necesitan texto.'));
+    }
+    if (options.any((o) => o.link.trim().isNotEmpty && !_isValidLink(o.link))) {
+      return const Result.failure(ValidationFailure('Alguno de los links no es válido (tiene que empezar con http:// o https://).'));
     }
 
     try {
@@ -88,11 +92,12 @@ class DecisionRepositoryImpl implements DecisionRepository {
         'shareCount': 0,
       });
 
-      for (var i = 0; i < optionTexts.length; i++) {
+      for (var i = 0; i < options.length; i++) {
         final optionRef = decisionRef.collection('options').doc();
         batch.set(optionRef, {
-          'text': optionTexts[i].trim(),
+          'text': options[i].text.trim(),
           'imageUrl': '',
+          'link': options[i].link.trim(),
           'order': i,
           'voteCount': 0,
           'authorId': authorId,
@@ -105,6 +110,11 @@ class DecisionRepositoryImpl implements DecisionRepository {
       appLogger.e('createDecision failed', error: e, stackTrace: st);
       return const Result.failure(UnknownFailure());
     }
+  }
+
+  bool _isValidLink(String link) {
+    final uri = Uri.tryParse(link.trim());
+    return uri != null && (uri.scheme == 'http' || uri.scheme == 'https') && uri.host.isNotEmpty;
   }
 
   @override

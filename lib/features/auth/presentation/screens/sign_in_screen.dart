@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../providers/auth_providers.dart';
+import '../widgets/oauth_buttons.dart';
 
 class SignInScreen extends ConsumerStatefulWidget {
   const SignInScreen({super.key});
@@ -115,6 +116,8 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                       onPressed: () => context.push('/register'),
                       child: const Text('¿No tenés cuenta? Registrate'),
                     ),
+                    const SizedBox(height: 16),
+                    const OAuthButtons(),
                   ],
                 ),
               ),

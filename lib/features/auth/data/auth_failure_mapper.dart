@@ -12,6 +12,9 @@ AuthFailure mapFirebaseAuthException(FirebaseAuthException e) {
     'user-disabled' => 'Esta cuenta fue deshabilitada.',
     'too-many-requests' => 'Demasiados intentos. Probá de nuevo en unos minutos.',
     'network-request-failed' => 'Error de conexión. Revisá tu internet.',
+    'account-exists-with-different-credential' =>
+      'Ya existe una cuenta con ese email usando otro método de inicio de sesión.',
+    'operation-not-allowed' => 'Este método de inicio de sesión no está habilitado todavía.',
     _ => 'No se pudo completar la operación. Intentá de nuevo.',
   };
   return AuthFailure(message);

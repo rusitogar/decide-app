@@ -12,7 +12,7 @@ abstract interface class DecisionRepository {
     required String title,
     required String description,
     required String category,
-    required List<String> optionTexts,
+    required List<({String text, String link})> options,
     DateTime? closesAt,
   });
 

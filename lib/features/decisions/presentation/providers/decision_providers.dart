@@ -42,7 +42,7 @@ class CreateDecisionController extends AsyncNotifier<void> {
     required String title,
     required String description,
     required String category,
-    required List<String> optionTexts,
+    required List<({String text, String link})> options,
     DateTime? closesAt,
   }) async {
     state = const AsyncLoading();
@@ -51,7 +51,7 @@ class CreateDecisionController extends AsyncNotifier<void> {
           title: title,
           description: description,
           category: category,
-          optionTexts: optionTexts,
+          options: options,
           closesAt: closesAt,
         );
     state = const AsyncData(null);

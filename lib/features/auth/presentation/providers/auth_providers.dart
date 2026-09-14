@@ -29,6 +29,19 @@ class AuthController extends AsyncNotifier<void> {
     return result.when(success: (_) => null, failure: (f) => f);
   }
 
+  /// `signedIn` es false tanto si hubo un error (`failure` no nulo) como si
+  /// el usuario cerró el selector de cuenta sin elegir ninguna (`failure`
+  /// nulo) — hay que distinguir los dos casos para no navegar por error.
+  Future<({bool signedIn, Failure? failure})> signInWithOAuth(OAuthProviderType provider) async {
+    state = const AsyncLoading();
+    final result = await ref.read(authRepositoryProvider).signInWithOAuth(provider);
+    state = const AsyncData(null);
+    return result.when(
+      success: (user) => (signedIn: user != null, failure: null),
+      failure: (f) => (signedIn: false, failure: f),
+    );
+  }
+
   Future<Failure?> sendPasswordResetEmail(String email) async {
     state = const AsyncLoading();
     final result = await ref.read(authRepositoryProvider).sendPasswordResetEmail(email);

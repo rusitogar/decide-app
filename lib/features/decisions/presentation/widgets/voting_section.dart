@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/entities/decision.dart';
 import '../../domain/entities/decision_option.dart';
 import '../providers/vote_providers.dart';
+import 'option_link_button.dart';
 
 class VotingSection extends ConsumerStatefulWidget {
   const VotingSection({
@@ -69,6 +70,7 @@ class _VotingSectionState extends ConsumerState<VotingSection> {
                 RadioListTile<String>(
                   contentPadding: EdgeInsets.zero,
                   title: Text(option.text),
+                  secondary: option.link.isEmpty ? null : OptionLinkButton(link: option.link),
                   value: option.id,
                 ),
               const SizedBox(height: 8),
@@ -158,6 +160,7 @@ class _ResultBar extends StatelessWidget {
                 style: TextStyle(fontWeight: isWinner ? FontWeight.bold : FontWeight.normal),
               ),
             ),
+            if (option.link.isNotEmpty) OptionLinkButton(link: option.link),
             if (isMyVote) const Padding(padding: EdgeInsets.only(right: 8), child: Text('Tu voto')),
             Text('${(pct * 100).round()}% ($votes)'),
           ],
