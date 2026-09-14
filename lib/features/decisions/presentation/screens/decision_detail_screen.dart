@@ -3,6 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../../comments/presentation/widgets/comments_section.dart';
+import '../../../social/presentation/widgets/like_button.dart';
+import '../../../social/presentation/widgets/save_button.dart';
+import '../../../social/presentation/widgets/share_button.dart';
 import '../../../users/presentation/providers/user_providers.dart';
 import '../../../users/presentation/widgets/user_avatar.dart';
 import '../providers/decision_providers.dart';
@@ -105,18 +109,24 @@ class DecisionDetailScreen extends ConsumerWidget {
                     loading: () => const Center(child: CircularProgressIndicator()),
                     error: (_, _) => const Text('No se pudieron cargar las opciones.'),
                   ),
-                  const SizedBox(height: 24),
-                  statsAsync.when(
-                    data: (stats) => Row(
-                      children: [
-                        Text('${stats.comments} comentarios'),
-                        const SizedBox(width: 16),
-                        Text('${stats.likes} likes'),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      if (currentUid != null) ...[
+                        LikeButton(userId: currentUid, decisionId: id),
+                        SaveButton(userId: currentUid, decisionId: id),
                       ],
-                    ),
-                    loading: () => const SizedBox.shrink(),
-                    error: (_, _) => const SizedBox.shrink(),
+                      ShareButton(decisionId: id, title: decision.title),
+                      const Spacer(),
+                      statsAsync.when(
+                        data: (stats) => Text('${stats.likes} likes'),
+                        loading: () => const SizedBox.shrink(),
+                        error: (_, _) => const SizedBox.shrink(),
+                      ),
+                    ],
                   ),
+                  const Divider(height: 32),
+                  CommentsSection(decisionId: id, currentUid: currentUid),
                   if (isOwner) ...[
                     const SizedBox(height: 24),
                     Row(

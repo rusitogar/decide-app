@@ -16,6 +16,11 @@ class HomeScreen extends ConsumerWidget {
         title: const Text('DECIDE'),
         actions: [
           IconButton(
+            icon: const Icon(Icons.bookmark_outline),
+            tooltip: 'Guardados',
+            onPressed: user == null ? null : () => context.push('/saved/${user.uid}'),
+          ),
+          IconButton(
             icon: const Icon(Icons.person_outline),
             tooltip: 'Mi perfil',
             onPressed: user == null ? null : () => context.push('/profile/${user.uid}'),

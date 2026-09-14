@@ -8,6 +8,7 @@ import '../../features/decisions/presentation/screens/create_decision_screen.dar
 import '../../features/decisions/presentation/screens/decision_detail_screen.dart';
 import '../../features/decisions/presentation/screens/edit_decision_screen.dart';
 import '../../features/decisions/presentation/screens/user_decisions_screen.dart';
+import '../../features/social/presentation/screens/saved_decisions_screen.dart';
 import '../../features/users/presentation/screens/edit_profile_screen.dart';
 import '../../features/users/presentation/screens/profile_screen.dart';
 
@@ -42,6 +43,10 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/decisions/create',
         builder: (context, state) => const CreateDecisionScreen(),
+      ),
+      GoRoute(
+        path: '/saved/:uid',
+        builder: (context, state) => SavedDecisionsScreen(userId: state.pathParameters['uid']!),
       ),
       // Ruta usada para deep links de compartir: decide://decision/{id}
       // y https://decide.app/decision/{id} (Android App Links / iOS Universal Links).
