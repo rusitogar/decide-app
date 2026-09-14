@@ -26,15 +26,13 @@ class FeedRepositoryImpl implements FeedRepository {
   }
 
   @override
-  Future<Result<List<Decision>>> getRecent({int limit = 20}) async {
-    try {
-      final snap =
-          await _firestore.collection('decisions').orderBy('createdAt', descending: true).limit(limit).get();
-      return Result.success(snap.docs.map(_fromDoc).toList());
-    } catch (e, st) {
-      appLogger.e('getRecent failed', error: e, stackTrace: st);
-      return const Result.failure(NetworkFailure());
-    }
+  Stream<List<Decision>> watchRecent({int limit = 20}) {
+    return _firestore
+        .collection('decisions')
+        .orderBy('createdAt', descending: true)
+        .limit(limit)
+        .snapshots()
+        .map((snap) => snap.docs.map(_fromDoc).toList());
   }
 
   @override
@@ -66,42 +64,33 @@ class FeedRepositoryImpl implements FeedRepository {
   }
 
   @override
-  Future<Result<List<Decision>>> getFollowing({required String userId, int limit = 20}) async {
-    try {
-      final followsSnap =
-          await _firestore.collection('follows').where('followerId', isEqualTo: userId).get();
+  Stream<List<Decision>> watchFollowing({required String userId, int limit = 20}) {
+    return _firestore.collection('follows').where('followerId', isEqualTo: userId).snapshots().asyncExpand((
+      followsSnap,
+    ) {
       final authorIds = followsSnap.docs.map((d) => d.data()['followingId'] as String).toSet().toList();
-
-      if (authorIds.isEmpty) return const Result.success([]);
+      if (authorIds.isEmpty) return Stream.value(<Decision>[]);
 
       // whereIn admite hasta 30 valores; suficiente para el volumen de la beta.
       final capped = authorIds.take(30).toList();
-      final snap = await _firestore
+      return _firestore
           .collection('decisions')
           .where('authorId', whereIn: capped)
           .orderBy('createdAt', descending: true)
           .limit(limit)
-          .get();
-      return Result.success(snap.docs.map(_fromDoc).toList());
-    } catch (e, st) {
-      appLogger.e('getFollowing failed', error: e, stackTrace: st);
-      return const Result.failure(NetworkFailure());
-    }
+          .snapshots()
+          .map((snap) => snap.docs.map(_fromDoc).toList());
+    });
   }
 
   @override
-  Future<Result<List<Decision>>> getByCategory({required String category, int limit = 20}) async {
-    try {
-      final snap = await _firestore
-          .collection('decisions')
-          .where('category', isEqualTo: category)
-          .orderBy('createdAt', descending: true)
-          .limit(limit)
-          .get();
-      return Result.success(snap.docs.map(_fromDoc).toList());
-    } catch (e, st) {
-      appLogger.e('getByCategory failed', error: e, stackTrace: st);
-      return const Result.failure(NetworkFailure());
-    }
+  Stream<List<Decision>> watchByCategory({required String category, int limit = 20}) {
+    return _firestore
+        .collection('decisions')
+        .where('category', isEqualTo: category)
+        .orderBy('createdAt', descending: true)
+        .limit(limit)
+        .snapshots()
+        .map((snap) => snap.docs.map(_fromDoc).toList());
   }
 }

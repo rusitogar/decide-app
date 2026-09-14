@@ -6,9 +6,8 @@ import '../../domain/repositories/feed_repository.dart';
 
 final feedRepositoryProvider = Provider<FeedRepository>((ref) => FeedRepositoryImpl());
 
-final recentFeedProvider = FutureProvider.autoDispose<List<Decision>>((ref) async {
-  final result = await ref.watch(feedRepositoryProvider).getRecent(limit: 20);
-  return result.when(success: (v) => v, failure: (_) => const []);
+final recentFeedProvider = StreamProvider.autoDispose<List<Decision>>((ref) {
+  return ref.watch(feedRepositoryProvider).watchRecent(limit: 20);
 });
 
 final trendingFeedProvider = FutureProvider.autoDispose<List<Decision>>((ref) async {
@@ -16,12 +15,10 @@ final trendingFeedProvider = FutureProvider.autoDispose<List<Decision>>((ref) as
   return result.when(success: (v) => v, failure: (_) => const []);
 });
 
-final followingFeedProvider = FutureProvider.autoDispose.family<List<Decision>, String>((ref, userId) async {
-  final result = await ref.watch(feedRepositoryProvider).getFollowing(userId: userId, limit: 20);
-  return result.when(success: (v) => v, failure: (_) => const []);
+final followingFeedProvider = StreamProvider.autoDispose.family<List<Decision>, String>((ref, userId) {
+  return ref.watch(feedRepositoryProvider).watchFollowing(userId: userId, limit: 20);
 });
 
-final categoryFeedProvider = FutureProvider.autoDispose.family<List<Decision>, String>((ref, category) async {
-  final result = await ref.watch(feedRepositoryProvider).getByCategory(category: category, limit: 20);
-  return result.when(success: (v) => v, failure: (_) => const []);
+final categoryFeedProvider = StreamProvider.autoDispose.family<List<Decision>, String>((ref, category) {
+  return ref.watch(feedRepositoryProvider).watchByCategory(category: category, limit: 20);
 });

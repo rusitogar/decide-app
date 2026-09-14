@@ -41,12 +41,6 @@ class OAuthButtons extends ConsumerWidget {
           icon: const Icon(Icons.g_mobiledata, size: 28),
           label: const Text('Continuar con Google'),
         ),
-        const SizedBox(height: 8),
-        OutlinedButton.icon(
-          onPressed: isLoading ? null : () => _signIn(context, ref, OAuthProviderType.microsoft),
-          icon: const Icon(Icons.window_outlined, size: 20),
-          label: const Text('Continuar con Microsoft'),
-        ),
       ],
     );
   }
