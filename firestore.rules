@@ -72,14 +72,17 @@ service cloud.firestore {
                     && unchanged('shareCount');
       allow delete: if isOwner(resource.data.authorId);
 
+      // La opción guarda su propio authorId (en vez de leer el documento
+      // padre con get()) porque la decisión y sus opciones se crean juntas
+      // en el mismo batch: en ese momento el padre todavía no existe para
+      // que get() lo lea, así que la regla rechazaría el batch entero.
       match /options/{optionId} {
         allow read: if true;
         allow create: if isSignedIn()
-                      && get(/databases/$(database)/documents/decisions/$(decisionId)).data.authorId == request.auth.uid
+                      && request.resource.data.authorId == request.auth.uid
                       && request.resource.data.voteCount == 0;
         allow update: if false; // el voteCount solo lo tocan Cloud Functions
-        allow delete: if isSignedIn()
-                      && get(/databases/$(database)/documents/decisions/$(decisionId)).data.authorId == request.auth.uid;
+        allow delete: if isSignedIn() && resource.data.authorId == request.auth.uid;
       }
     }
 

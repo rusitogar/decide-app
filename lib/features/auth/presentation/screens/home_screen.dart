@@ -30,6 +30,11 @@ class HomeScreen extends ConsumerWidget {
       body: Center(
         child: Text('Sesión iniciada como\n${user?.email ?? ''}', textAlign: TextAlign.center),
       ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => context.push('/decisions/create'),
+        icon: const Icon(Icons.add),
+        label: const Text('Nueva decisión'),
+      ),
     );
   }
 }

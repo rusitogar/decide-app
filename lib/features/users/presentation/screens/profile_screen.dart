@@ -57,7 +57,10 @@ class ProfileScreen extends ConsumerWidget {
                     data: (counts) => Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        _CountItem(label: 'Decisiones', value: counts.decisions),
+                        InkWell(
+                          onTap: () => context.push('/profile/$uid/decisions'),
+                          child: _CountItem(label: 'Decisiones', value: counts.decisions),
+                        ),
                         const SizedBox(width: 24),
                         _CountItem(label: 'Seguidores', value: counts.followers),
                         const SizedBox(width: 24),
