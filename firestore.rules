@@ -38,6 +38,17 @@ service cloud.firestore {
       }
     }
 
+    // ---------- usernames ----------
+    // Reserva el @username para que sea único. El uid dueño queda guardado
+    // para poder liberar el nombre viejo al cambiarlo. Se crea/borra junto
+    // con users/{uid}.username en una única transacción del cliente.
+    match /usernames/{username} {
+      allow read: if true;
+      allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
+      allow delete: if isSignedIn() && resource.data.uid == request.auth.uid;
+      allow update: if false;
+    }
+
     // ---------- categories ----------
     match /categories/{categoryId} {
       allow read: if true;

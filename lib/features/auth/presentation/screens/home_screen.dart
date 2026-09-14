@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../providers/auth_providers.dart';
 
@@ -14,6 +15,11 @@ class HomeScreen extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('DECIDE'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.person_outline),
+            tooltip: 'Mi perfil',
+            onPressed: user == null ? null : () => context.push('/profile/${user.uid}'),
+          ),
           IconButton(
             icon: const Icon(Icons.logout),
             tooltip: 'Cerrar sesión',

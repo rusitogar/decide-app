@@ -115,6 +115,32 @@ contraseña, persistencia de sesión (maneja sola vía `authStateChanges()`).
   en Firestore; borrarla desde la consola si se quiere un proyecto limpio antes de la
   beta.
 
+## Perfil y follow — Fase 3
+
+- `lib/features/users/`: perfil (ver/editar username, nombre visible, bio, avatar) y
+  `lib/features/social/`: follow/unfollow. Rutas `/profile/:uid` y `/profile/edit`.
+- **Avatar sin Firebase Storage** (pendiente de Blaze, ver Fase 1): en vez de subir una
+  foto, el usuario elige un color de fondo (`avatarColor`, campo nuevo en `users/{uid}`)
+  y se muestra un círculo con sus iniciales. `avatarUrl` sigue existiendo en el schema
+  para cuando se pueda subir fotos de verdad.
+- **Usernames únicos**: colección nueva `usernames/{username} -> {uid}`, no estaba en
+  el doc de scope original pero se agregó porque sin esto dos personas podrían tener el
+  mismo @usuario. Se reserva/libera con una transacción de Firestore en
+  `UserRepositoryImpl.updateProfile`.
+  - Importante: **no lanzar excepciones propias (`throw MiFailure(...)`) dentro de
+    `runTransaction`** — en la implementación web de `cloud_firestore`, el error cruza
+    un puente de interop con JS y pierde el tipo Dart original, así que el `catch`
+    de afuera nunca lo reconoce (siempre cae en el error genérico). Hacer que la
+    transacción `return` un valor simple (bool/enum) e interpretarlo después.
+  - Al registrarse, el username inicial (el uid de Firebase Auth) NO tiene una reserva
+    en `usernames/` — si se borra/cambia esa reserva en una transacción, primero hay
+    que leer si existe (`tx.get`) antes de `tx.delete`, si no la regla de seguridad
+    rechaza toda la transacción (permission-denied) porque `resource.data` no existe.
+- Contadores (followers/following/decisions) se recalculan con `count()` y se
+  invalidan (`ref.invalidate(profileCountsProvider(uid))`) después de un follow/unfollow
+  para que se actualicen al instante — si a futuro se agrega otra acción que cambie
+  estos números, hay que invalidar ese provider también.
+
 ## Cómo previsualizar la app
 
 `.claude/launch.json` en este proyecto define `decide-web` (Flutter en modo
@@ -125,13 +151,25 @@ manualmente:
 & "C:\Users\gar_e\Desktop\flutter\bin\flutter.bat" run -d web-server --web-port 8765
 ```
 
-y abrir `http://localhost:8765`. Para probar en el celular todavía falta terminar el
-setup del SDK de Android (ver sección Toolchain).
+y abrir `http://localhost:8765`.
+
+**Cuidado al probar navegando por URL con el Browser pane**: la app usa hash routing
+(`#/profile/xxx`). Navegar de una URL con hash a OTRA URL que solo difiere en el hash
+(ej. `#/profile/a` -> `#/profile/b`) **no recarga la página ni el código compilado** —
+el navegador lo trata como navegación dentro del mismo documento. Si acabás de reiniciar
+`flutter run` después de un cambio de código, primero navegá a la URL SIN hash
+(`http://localhost:8765`) para forzar una recarga real, y recién después cambiá el hash
+(podés hacerlo con `location.hash = '#/...'` vía JS, o navegando de nuevo). Si no,
+vas a estar probando código viejo sin ningún aviso — así costó detectar que el
+sistema de contadores en realidad funcionaba bien.
+
+Para probar en el celular todavía falta terminar el setup del SDK de Android (ver
+sección Toolchain).
 
 ## Estado actual
 
-Fases 0, 1 y 2 completas (2026-09-13). Sigue la Fase 3 (Perfil de usuario: ver/editar
-perfil, avatar, followers/following, follow/unfollow).
+Fases 0, 1, 2 y 3 completas (2026-09-14). Sigue la Fase 4 (Decisiones: crear, editar,
+eliminar, publicar, ver, categorías, opciones 2-5, imagen opcional, fecha de cierre).
 
 ## Git
 
