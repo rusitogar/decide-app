@@ -83,6 +83,7 @@ class UserRepositoryImpl implements UserRepository {
     required String displayName,
     required String bio,
     required int avatarColor,
+    String? avatarUrl,
   }) async {
     final normalized = normalizeUsername(username);
     if (!_usernamePattern.hasMatch(normalized)) {
@@ -130,6 +131,7 @@ class UserRepositoryImpl implements UserRepository {
           'displayName': displayName.trim(),
           'bio': bio.trim(),
           'avatarColor': avatarColor,
+          if (avatarUrl != null) 'avatarUrl': avatarUrl,
         });
 
         return false;

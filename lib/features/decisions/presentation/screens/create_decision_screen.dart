@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/storage/image_upload_service.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../providers/decision_providers.dart';
 
@@ -24,6 +25,9 @@ class _CreateDecisionScreenState extends ConsumerState<CreateDecisionScreen> {
     TextEditingController(),
     TextEditingController(),
   ];
+  final List<String> _imageUrls = ['', ''];
+  final List<bool> _uploadingImage = [false, false];
+  final _imageUploadService = ImageUploadService();
   String? _category;
   DateTime? _closesAt;
 
@@ -45,6 +49,8 @@ class _CreateDecisionScreenState extends ConsumerState<CreateDecisionScreen> {
     setState(() {
       _optionControllers.add(TextEditingController());
       _linkControllers.add(TextEditingController());
+      _imageUrls.add('');
+      _uploadingImage.add(false);
     });
   }
 
@@ -53,7 +59,29 @@ class _CreateDecisionScreenState extends ConsumerState<CreateDecisionScreen> {
     setState(() {
       _optionControllers.removeAt(index).dispose();
       _linkControllers.removeAt(index).dispose();
+      _imageUrls.removeAt(index);
+      _uploadingImage.removeAt(index);
     });
+  }
+
+  Future<void> _pickOptionImage(int index, String uid) async {
+    final file = await _imageUploadService.pickImage();
+    if (file == null) return;
+
+    setState(() => _uploadingImage[index] = true);
+    try {
+      final path = 'decisionOptionImages/$uid/${DateTime.now().millisecondsSinceEpoch}.jpg';
+      final url = await _imageUploadService.upload(file: file, path: path);
+      if (!mounted) return;
+      setState(() => _imageUrls[index] = url);
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No se pudo subir la foto.')),
+      );
+    } finally {
+      if (mounted) setState(() => _uploadingImage[index] = false);
+    }
   }
 
   Future<void> _pickClosesAt() async {
@@ -80,7 +108,7 @@ class _CreateDecisionScreenState extends ConsumerState<CreateDecisionScreen> {
 
     final options = [
       for (var i = 0; i < _optionControllers.length; i++)
-        (text: _optionControllers[i].text, link: _linkControllers[i].text),
+        (text: _optionControllers[i].text, link: _linkControllers[i].text, imageUrl: _imageUrls[i]),
     ];
 
     final result = await ref.read(createDecisionControllerProvider.notifier).create(
@@ -104,6 +132,7 @@ class _CreateDecisionScreenState extends ConsumerState<CreateDecisionScreen> {
   Widget build(BuildContext context) {
     final categoriesAsync = ref.watch(categoriesProvider);
     final isSaving = ref.watch(createDecisionControllerProvider).isLoading;
+    final uid = ref.watch(authRepositoryProvider).currentUser?.uid;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Nueva decisión')),
@@ -146,8 +175,8 @@ class _CreateDecisionScreenState extends ConsumerState<CreateDecisionScreen> {
                     Text('Opciones (2 a 5)', style: Theme.of(context).textTheme.labelLarge),
                     const SizedBox(height: 4),
                     Text(
-                      'Podés sumar un link de referencia por opción (MercadoLibre, Amazon, '
-                      'YouTube, etc.) para que sea más fácil decidir.',
+                      'Podés sumar una foto y un link de referencia por opción (MercadoLibre, '
+                      'Amazon, YouTube, etc.) para que sea más fácil decidir.',
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
                     const SizedBox(height: 8),
@@ -159,6 +188,31 @@ class _CreateDecisionScreenState extends ConsumerState<CreateDecisionScreen> {
                           children: [
                             Row(
                               children: [
+                                GestureDetector(
+                                  onTap: (uid == null || _uploadingImage[i])
+                                      ? null
+                                      : () => _pickOptionImage(i, uid),
+                                  child: Container(
+                                    width: 48,
+                                    height: 48,
+                                    margin: const EdgeInsets.only(right: 8),
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(color: Theme.of(context).dividerColor),
+                                      image: _imageUrls[i].isEmpty
+                                          ? null
+                                          : DecorationImage(image: NetworkImage(_imageUrls[i]), fit: BoxFit.cover),
+                                    ),
+                                    child: _uploadingImage[i]
+                                        ? const Padding(
+                                            padding: EdgeInsets.all(12),
+                                            child: CircularProgressIndicator(strokeWidth: 2),
+                                          )
+                                        : (_imageUrls[i].isEmpty
+                                            ? const Icon(Icons.add_a_photo_outlined, size: 20)
+                                            : null),
+                                  ),
+                                ),
                                 Expanded(
                                   child: TextFormField(
                                     controller: _optionControllers[i],

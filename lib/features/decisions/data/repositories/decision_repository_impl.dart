@@ -8,6 +8,7 @@ import '../../domain/entities/decision.dart';
 import '../../domain/entities/decision_option.dart';
 import '../../domain/entities/decision_stats.dart';
 import '../../domain/repositories/decision_repository.dart';
+import '../datasources/link_preview_client.dart';
 
 class DecisionRepositoryImpl implements DecisionRepository {
   DecisionRepositoryImpl({FirebaseFirestore? firestore}) : _firestore = firestore ?? FirebaseFirestore.instance;
@@ -35,6 +36,9 @@ class DecisionRepositoryImpl implements DecisionRepository {
       text: data['text'] as String? ?? '',
       imageUrl: data['imageUrl'] as String? ?? '',
       link: data['link'] as String? ?? '',
+      previewTitle: data['previewTitle'] as String? ?? '',
+      previewImage: data['previewImage'] as String? ?? '',
+      previewSite: data['previewSite'] as String? ?? '',
       order: data['order'] as int? ?? 0,
     );
   }
@@ -58,7 +62,7 @@ class DecisionRepositoryImpl implements DecisionRepository {
     required String title,
     required String description,
     required String category,
-    required List<({String text, String link})> options,
+    required List<({String text, String link, String imageUrl})> options,
     DateTime? closesAt,
   }) async {
     if (title.trim().isEmpty) {
@@ -73,6 +77,11 @@ class DecisionRepositoryImpl implements DecisionRepository {
     if (options.any((o) => o.link.trim().isNotEmpty && !_isValidLink(o.link))) {
       return const Result.failure(ValidationFailure('Alguno de los links no es válido (tiene que empezar con http:// o https://).'));
     }
+
+    final previews = await Future.wait(options.map((o) {
+      final link = o.link.trim();
+      return link.isEmpty ? Future.value(LinkPreviewResult.empty) : fetchLinkPreview(link);
+    }));
 
     try {
       final decisionRef = _firestore.collection('decisions').doc();
@@ -96,8 +105,11 @@ class DecisionRepositoryImpl implements DecisionRepository {
         final optionRef = decisionRef.collection('options').doc();
         batch.set(optionRef, {
           'text': options[i].text.trim(),
-          'imageUrl': '',
+          'imageUrl': options[i].imageUrl.trim(),
           'link': options[i].link.trim(),
+          'previewTitle': previews[i].title,
+          'previewImage': previews[i].image,
+          'previewSite': previews[i].site,
           'order': i,
           'voteCount': 0,
           'authorId': authorId,

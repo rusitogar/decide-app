@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/storage/image_upload_service.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../providers/user_providers.dart';
 
@@ -18,8 +19,11 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   final _usernameController = TextEditingController();
   final _displayNameController = TextEditingController();
   final _bioController = TextEditingController();
+  final _imageUploadService = ImageUploadService();
   int? _avatarColor;
+  String? _newAvatarUrl;
   bool _initialized = false;
+  bool _uploadingAvatar = false;
 
   @override
   void dispose() {
@@ -27,6 +31,25 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     _displayNameController.dispose();
     _bioController.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickAvatar(String uid) async {
+    final file = await _imageUploadService.pickImage();
+    if (file == null) return;
+
+    setState(() => _uploadingAvatar = true);
+    try {
+      final url = await _imageUploadService.upload(file: file, path: 'avatars/$uid/avatar.jpg');
+      if (!mounted) return;
+      setState(() => _newAvatarUrl = url);
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No se pudo subir la foto.')),
+      );
+    } finally {
+      if (mounted) setState(() => _uploadingAvatar = false);
+    }
   }
 
   Future<void> _submit(String uid) async {
@@ -38,6 +61,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           displayName: _displayNameController.text,
           bio: _bioController.text,
           avatarColor: _avatarColor ?? _avatarPalette.first,
+          avatarUrl: _newAvatarUrl,
         );
 
     if (!mounted) return;
@@ -80,7 +104,40 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Text('Color de avatar', style: Theme.of(context).textTheme.labelLarge),
+                      Center(
+                        child: GestureDetector(
+                          onTap: _uploadingAvatar ? null : () => _pickAvatar(uid),
+                          child: Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              CircleAvatar(
+                                radius: 48,
+                                backgroundColor: Color(_avatarColor ?? profile.avatarColor),
+                                backgroundImage: _newAvatarUrl != null
+                                    ? NetworkImage(_newAvatarUrl!)
+                                    : (profile.avatarUrl.isNotEmpty ? NetworkImage(profile.avatarUrl) : null),
+                                child: _newAvatarUrl == null && profile.avatarUrl.isEmpty
+                                    ? const Icon(Icons.person, size: 40, color: Colors.white)
+                                    : null,
+                              ),
+                              if (_uploadingAvatar)
+                                const CircularProgressIndicator()
+                              else
+                                Positioned(
+                                  bottom: 0,
+                                  right: 0,
+                                  child: CircleAvatar(
+                                    radius: 16,
+                                    backgroundColor: Theme.of(context).colorScheme.primary,
+                                    child: const Icon(Icons.camera_alt, size: 16, color: Colors.white),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      Text('Color de avatar (se usa si no tenés foto)', style: Theme.of(context).textTheme.labelLarge),
                       const SizedBox(height: 8),
                       Wrap(
                         spacing: 12,

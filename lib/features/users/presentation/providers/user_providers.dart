@@ -32,6 +32,7 @@ class EditProfileController extends AsyncNotifier<void> {
     required String displayName,
     required String bio,
     required int avatarColor,
+    String? avatarUrl,
   }) async {
     state = const AsyncLoading();
     final result = await ref.read(userRepositoryProvider).updateProfile(
@@ -40,6 +41,7 @@ class EditProfileController extends AsyncNotifier<void> {
           displayName: displayName,
           bio: bio,
           avatarColor: avatarColor,
+          avatarUrl: avatarUrl,
         );
     state = const AsyncData(null);
     return result.when(success: (_) => null, failure: (f) => f);

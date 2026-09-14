@@ -16,5 +16,6 @@ abstract interface class UserRepository {
     required String displayName,
     required String bio,
     required int avatarColor,
+    String? avatarUrl,
   });
 }

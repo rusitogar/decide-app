@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/entities/decision.dart';
 import '../../domain/entities/decision_option.dart';
 import '../providers/vote_providers.dart';
-import 'option_link_button.dart';
+import 'link_preview_card.dart';
 
 class VotingSection extends ConsumerStatefulWidget {
   const VotingSection({
@@ -70,7 +70,8 @@ class _VotingSectionState extends ConsumerState<VotingSection> {
                 RadioListTile<String>(
                   contentPadding: EdgeInsets.zero,
                   title: Text(option.text),
-                  secondary: option.link.isEmpty ? null : OptionLinkButton(link: option.link),
+                  secondary: option.imageUrl.isEmpty ? null : _OptionThumbnail(url: option.imageUrl),
+                  subtitle: option.link.isEmpty ? null : LinkPreviewCard(option: option),
                   value: option.id,
                 ),
               const SizedBox(height: 8),
@@ -153,6 +154,11 @@ class _ResultBar extends StatelessWidget {
       children: [
         Row(
           children: [
+            if (option.imageUrl.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: _OptionThumbnail(url: option.imageUrl),
+              ),
             if (isWinner) const Padding(padding: EdgeInsets.only(right: 4), child: Icon(Icons.emoji_events, size: 16)),
             Expanded(
               child: Text(
@@ -160,17 +166,42 @@ class _ResultBar extends StatelessWidget {
                 style: TextStyle(fontWeight: isWinner ? FontWeight.bold : FontWeight.normal),
               ),
             ),
-            if (option.link.isNotEmpty) OptionLinkButton(link: option.link),
             if (isMyVote) const Padding(padding: EdgeInsets.only(right: 8), child: Text('Tu voto')),
             Text('${(pct * 100).round()}% ($votes)'),
           ],
         ),
+        if (option.link.isNotEmpty) LinkPreviewCard(option: option),
         const SizedBox(height: 4),
         ClipRRect(
           borderRadius: BorderRadius.circular(4),
           child: LinearProgressIndicator(value: pct, minHeight: 8),
         ),
       ],
+    );
+  }
+}
+
+class _OptionThumbnail extends StatelessWidget {
+  const _OptionThumbnail({required this.url});
+
+  final String url;
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(6),
+      child: Image.network(
+        url,
+        width: 40,
+        height: 40,
+        fit: BoxFit.cover,
+        errorBuilder: (_, _, _) => Container(
+          width: 40,
+          height: 40,
+          color: Theme.of(context).colorScheme.surfaceContainerHighest,
+          child: const Icon(Icons.image_not_supported_outlined, size: 18),
+        ),
+      ),
     );
   }
 }
