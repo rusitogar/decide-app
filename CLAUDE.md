@@ -225,16 +225,38 @@ el navegador lo trata como navegación dentro del mismo documento. Si acabás de
 vas a estar probando código viejo sin ningún aviso — así costó detectar que el
 sistema de contadores en realidad funcionaba bien.
 
-Para probar en el celular todavía falta terminar el setup del SDK de Android (ver
-sección Toolchain).
+**Web publicada**: https://decide-app-rusito.web.app (Firebase Hosting, plan gratuito,
+sin necesitar Blaze). Para republicar después de un cambio:
+
+```
+& "C:\Users\gar_e\Desktop\flutter\bin\flutter.bat" build web --release
+```
+seguido de `firebase deploy --only hosting --project decide-app-rusito` (con el PATH
+de npm cargado, ver comandos de Firebase CLI usados en sesiones anteriores).
+
+**Android: el SDK ya está instalado y funcionando** (verificado 2026-09-14
+compilando un APK real). `flutter doctor` muestra "Android license status unknown"
+pero es cosmético — ver [[toolchain-state]] en la memoria de Claude, no hace falta
+investigarlo de nuevo. Comando para compilar:
+
+```
+& "C:\Users\gar_e\Desktop\flutter\bin\flutter.bat" build apk --release
+```
+El archivo queda en `build\app\outputs\flutter-apk\app-release.apk`. Todavía firma
+con la clave de debug (no hay keystore de release configurado) — suficiente para
+instalar en el propio celular, no para publicar en Play Store.
+
+**Importante**: compilar el APK no significa instalarlo en el teléfono del usuario.
+Dejarlo listo y avisar; instalarlo (por USB/ADB o enviándolo) solo cuando el usuario
+lo pida explícitamente.
 
 ## Estado actual
 
 Fases 0 a 9 completas (2026-09-14), todas probadas a mano en Chrome contra el
-proyecto Firebase real. Pendiente real: activar Blaze (desbloquea Cloud Functions
-—notificaciones automáticas y contadores denormalizados— y Firebase Storage —fotos
-de avatar/decisión/opción—) y terminar el setup del SDK de Android para probar en
-el celular. Ninguna de las dos cosas requiere rehacer código ya escrito.
+proyecto Firebase real. La web está publicada y el APK de Android compila. Único
+pendiente real: activar Blaze (desbloquea Cloud Functions —notificaciones
+automáticas y contadores denormalizados— y Firebase Storage —fotos de
+avatar/decisión/opción—). No requiere rehacer código ya escrito.
 
 Lo que sigue del documento de scope son las Fases 10 y 11 (Beta privada, MVP
 público) — son de proceso/lanzamiento (conseguir testers, monitorear, publicar de a
