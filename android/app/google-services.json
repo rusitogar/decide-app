@@ -12,7 +12,20 @@
           "package_name": "com.tuempresa.decide"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "899335110338-5190d5h8nvsg1k7giqahlc1ai4271vb3.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.tuempresa.decide",
+            "certificate_hash": "771519c09a739f352fbdaa91be3a95e530cb913f"
+          }
+        },
+        {
+          "client_id": "899335110338-3gqu9o107gddeggin4ees1lh7u4131c7.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyC5KFAG-9iJVdNKO1DiR6MzAJnikq68cHw"
@@ -20,7 +33,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "899335110338-3gqu9o107gddeggin4ees1lh7u4131c7.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "899335110338-l4bqaarb42duclfaj7t25nhbrirjvv3r.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.tuempresa.decide"
+              }
+            }
+          ]
         }
       }
     }
