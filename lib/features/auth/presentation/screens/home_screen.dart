@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../feed/presentation/widgets/feed_body.dart';
 import '../providers/auth_providers.dart';
 
 class HomeScreen extends ConsumerWidget {
@@ -32,9 +33,7 @@ class HomeScreen extends ConsumerWidget {
           ),
         ],
       ),
-      body: Center(
-        child: Text('Sesión iniciada como\n${user?.email ?? ''}', textAlign: TextAlign.center),
-      ),
+      body: FeedBody(currentUid: user?.uid),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => context.push('/decisions/create'),
         icon: const Icon(Icons.add),
