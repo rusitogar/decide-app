@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../users/presentation/providers/user_providers.dart';
 import '../providers/auth_providers.dart';
 import '../widgets/oauth_buttons.dart';
 
@@ -13,13 +14,16 @@ class SignUpScreen extends ConsumerStatefulWidget {
 
 class _SignUpScreenState extends ConsumerState<SignUpScreen> {
   final _formKey = GlobalKey<FormState>();
+  final _usernameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   bool _obscurePassword = true;
+  bool _submitting = false;
 
   @override
   void dispose() {
+    _usernameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
@@ -29,22 +33,46 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
+    final username = _usernameController.text.trim();
+
+    setState(() => _submitting = true);
+
+    final availability = await ref.read(userRepositoryProvider).isUsernameAvailable(username, currentUid: '');
+    final isAvailable = availability.when(success: (v) => v, failure: (_) => true);
+    if (!isAvailable) {
+      if (!mounted) return;
+      setState(() => _submitting = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Ese nombre de usuario ya está en uso.')),
+      );
+      return;
+    }
+
     final failure = await ref.read(authControllerProvider.notifier).signUp(
           email: _emailController.text.trim(),
           password: _passwordController.text,
+          username: username,
         );
 
     if (!mounted) return;
     if (failure != null) {
+      setState(() => _submitting = false);
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(failure.message)));
-    } else {
-      Navigator.of(context).pop();
+      return;
     }
+
+    final uid = ref.read(authRepositoryProvider).currentUser?.uid;
+    if (uid != null) {
+      await ref.read(userRepositoryProvider).reserveUsername(uid: uid, username: username);
+    }
+
+    if (!mounted) return;
+    Navigator.of(context).pop();
   }
 
   @override
   Widget build(BuildContext context) {
-    final isLoading = ref.watch(authControllerProvider).isLoading;
+    final isLoading = _submitting || ref.watch(authControllerProvider).isLoading;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Crear cuenta')),
@@ -60,6 +88,19 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   mainAxisSize: MainAxisSize.min,
                   children: [
+                    TextFormField(
+                      controller: _usernameController,
+                      decoration: const InputDecoration(labelText: 'Usuario', prefixText: '@'),
+                      validator: (value) {
+                        final v = value?.trim() ?? '';
+                        if (v.isEmpty) return 'Ingresá un usuario';
+                        if (!RegExp(r'^[a-zA-Z0-9_]{3,20}$').hasMatch(v)) {
+                          return '3-20 caracteres: letras, números o _';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16),
                     TextFormField(
                       controller: _emailController,
                       keyboardType: TextInputType.emailAddress,

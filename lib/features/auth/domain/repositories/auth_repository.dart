@@ -8,7 +8,7 @@ abstract interface class AuthRepository {
 
   AppUser? get currentUser;
 
-  Future<Result<AppUser>> signUp({required String email, required String password});
+  Future<Result<AppUser>> signUp({required String email, required String password, String? username});
 
   Future<Result<AppUser>> signIn({required String email, required String password});
 

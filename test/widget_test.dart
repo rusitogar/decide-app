@@ -15,7 +15,7 @@ class _FakeAuthRepository implements AuthRepository {
   AppUser? get currentUser => null;
 
   @override
-  Future<Result<AppUser>> signUp({required String email, required String password}) async =>
+  Future<Result<AppUser>> signUp({required String email, required String password, String? username}) async =>
       throw UnimplementedError();
 
   @override

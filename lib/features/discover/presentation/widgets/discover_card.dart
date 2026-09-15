@@ -72,6 +72,11 @@ class _DiscoverCardBody extends ConsumerWidget {
     final counts = countsAsync.value ?? const {};
     final total = counts.values.fold<int>(0, (sum, v) => sum + v);
 
+    // El fondo (fotos) va de punta a punta, pero el contenido interactivo
+    // (textos, botones) tiene que quedar por encima de la barra/gestos de
+    // Android y del notch, si no queda tapado.
+    final viewPadding = MediaQuery.paddingOf(context);
+
     return Stack(
       fit: StackFit.expand,
       children: [
@@ -81,11 +86,12 @@ class _DiscoverCardBody extends ConsumerWidget {
           myOptionId: myOptionId,
           counts: counts,
           total: total,
+          bottomInset: viewPadding.bottom,
           onTap: hasVoted ? null : (optionId) => _vote(ref, optionId),
         ),
 
         Positioned(
-          top: 12,
+          top: 12 + viewPadding.top,
           left: 16,
           right: 64,
           child: Row(
@@ -115,7 +121,7 @@ class _DiscoverCardBody extends ConsumerWidget {
         ),
 
         Positioned(
-          top: 34,
+          top: 34 + viewPadding.top,
           left: 16,
           right: 64,
           child: Container(
@@ -132,7 +138,7 @@ class _DiscoverCardBody extends ConsumerWidget {
 
         Positioned(
           right: 10,
-          bottom: 110,
+          bottom: 110 + viewPadding.bottom,
           child: _IconRail(decisionId: decision.id, currentUid: currentUid, title: decision.title),
         ),
       ],
@@ -147,6 +153,7 @@ class _OptionsLayout extends StatelessWidget {
     required this.myOptionId,
     required this.counts,
     required this.total,
+    required this.bottomInset,
     required this.onTap,
   });
 
@@ -155,6 +162,7 @@ class _OptionsLayout extends StatelessWidget {
   final String? myOptionId;
   final Map<String, int> counts;
   final int total;
+  final double bottomInset;
   final void Function(String optionId)? onTap;
 
   @override
@@ -173,6 +181,7 @@ class _OptionsLayout extends StatelessWidget {
                     isMine: option.id == myOptionId,
                     votes: counts[option.id] ?? 0,
                     total: total,
+                    bottomInset: bottomInset,
                     onTap: onTap == null ? null : () => onTap!(option.id),
                   ),
                 ),
@@ -211,6 +220,7 @@ class _OptionsLayout extends StatelessWidget {
                       isMine: option.id == myOptionId,
                       votes: counts[option.id] ?? 0,
                       total: total,
+                      bottomInset: bottomInset,
                       onTap: onTap == null ? null : () => onTap!(option.id),
                     ),
                   ),
@@ -229,6 +239,7 @@ class _OptionTile extends StatelessWidget {
     required this.isMine,
     required this.votes,
     required this.total,
+    required this.bottomInset,
     required this.onTap,
   });
 
@@ -237,6 +248,7 @@ class _OptionTile extends StatelessWidget {
   final bool isMine;
   final int votes;
   final int total;
+  final double bottomInset;
   final VoidCallback? onTap;
 
   @override
@@ -258,7 +270,7 @@ class _OptionTile extends StatelessWidget {
           child: hasVoted
               ? Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
+                  padding: EdgeInsets.fromLTRB(10, 8, 10, 10 + bottomInset),
                   color: Colors.black.withValues(alpha: 0.55),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
@@ -289,7 +301,7 @@ class _OptionTile extends StatelessWidget {
                   ),
                 )
               : Padding(
-                  padding: const EdgeInsets.all(10),
+                  padding: EdgeInsets.fromLTRB(10, 10, 10, 10 + bottomInset),
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(color: _brandBlue, borderRadius: BorderRadius.circular(7)),

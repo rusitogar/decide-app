@@ -20,10 +20,15 @@ async function createNotification({ recipientId, actorId, type, decisionId }) {
 
 // Crea el perfil público (users/{uid}) apenas alguien se registra en
 // Firebase Authentication, con los contadores en 0.
+//
+// OJO: a propósito no toca el campo "username" acá. Ese lo define el
+// cliente (con el usuario que eligió al registrarse, o el uid como
+// respaldo para logins con Google/Microsoft) — si esta función lo pisara
+// con `user.uid` en cada corrida, se comía cualquier usuario elegido a
+// mano, sin importar el orden en que corran los dos escrituras.
 exports.onAuthUserCreate = functionsV1.auth.user().onCreate(async (user) => {
   await db.doc(`users/${user.uid}`).set(
     {
-      username: user.uid,
       displayName: user.displayName ?? '',
       avatarUrl: user.photoURL ?? '',
       bio: '',

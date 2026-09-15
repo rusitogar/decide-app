@@ -10,6 +10,11 @@ abstract interface class UserRepository {
   /// true si `username` está libre (o es el que ya tiene `currentUid`).
   Future<Result<bool>> isUsernameAvailable(String username, {required String currentUid});
 
+  /// Reserva `username` para `uid` en la colección `usernames` (sin tocar
+  /// el resto del perfil). Se usa recién creada la cuenta, después de que
+  /// `AuthRepository.signUp` ya guardó el username elegido en `users/{uid}`.
+  Future<Result<void>> reserveUsername({required String uid, required String username});
+
   Future<Result<void>> updateProfile({
     required String uid,
     required String username,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../decisions/presentation/providers/decision_providers.dart';
+import '../../../discover/presentation/widgets/discover_feed.dart';
 import '../providers/feed_providers.dart';
 import 'feed_list.dart';
 
@@ -21,7 +22,7 @@ class _FeedBodyState extends ConsumerState<FeedBody> with SingleTickerProviderSt
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 4, vsync: this);
   }
 
   @override
@@ -38,10 +39,13 @@ class _FeedBodyState extends ConsumerState<FeedBody> with SingleTickerProviderSt
       children: [
         TabBar(
           controller: _tabController,
+          isScrollable: true,
+          tabAlignment: TabAlignment.start,
           tabs: const [
             Tab(text: 'Para vos'),
             Tab(text: 'Tendencias'),
             Tab(text: 'Siguiendo'),
+            Tab(text: 'Descubrir'),
           ],
         ),
         categoriesAsync.when(
@@ -94,6 +98,7 @@ class _FeedBodyState extends ConsumerState<FeedBody> with SingleTickerProviderSt
                       decisionsAsync: ref.watch(followingFeedProvider(widget.currentUid!)),
                       emptyMessage: 'Seguí a otros usuarios para ver sus decisiones acá.',
                     ),
+              DiscoverFeed(currentUid: widget.currentUid),
             ],
           ),
         ),

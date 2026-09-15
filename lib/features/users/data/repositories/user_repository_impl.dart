@@ -77,6 +77,34 @@ class UserRepositoryImpl implements UserRepository {
   }
 
   @override
+  Future<Result<void>> reserveUsername({required String uid, required String username}) async {
+    final normalized = normalizeUsername(username);
+    if (!_usernamePattern.hasMatch(normalized)) {
+      return const Result.failure(
+        ValidationFailure('El usuario debe tener 3-20 caracteres: letras, números o _'),
+      );
+    }
+
+    final usernameRef = _firestore.collection('usernames').doc(normalized);
+    try {
+      final taken = await _firestore.runTransaction<bool>((tx) async {
+        final snap = await tx.get(usernameRef);
+        if (snap.exists && snap.data()?['uid'] != uid) return true;
+        tx.set(usernameRef, {'uid': uid});
+        return false;
+      });
+
+      if (taken) {
+        return const Result.failure(ValidationFailure('Ese nombre de usuario ya está en uso.'));
+      }
+      return const Result.success(null);
+    } catch (e, st) {
+      appLogger.e('reserveUsername failed', error: e, stackTrace: st);
+      return const Result.failure(UnknownFailure());
+    }
+  }
+
+  @override
   Future<Result<void>> updateProfile({
     required String uid,
     required String username,

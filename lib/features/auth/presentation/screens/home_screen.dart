@@ -17,9 +17,9 @@ class HomeScreen extends ConsumerWidget {
         title: const Text('DECIDE'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.explore_outlined),
-            tooltip: 'Descubrir',
-            onPressed: () => context.push('/discover'),
+            icon: const Icon(Icons.add),
+            tooltip: 'Nueva decisión',
+            onPressed: user == null ? null : () => context.push('/decisions/create'),
           ),
           IconButton(
             icon: const Icon(Icons.notifications_outlined),
@@ -44,11 +44,6 @@ class HomeScreen extends ConsumerWidget {
         ],
       ),
       body: FeedBody(currentUid: user?.uid),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => context.push('/decisions/create'),
-        icon: const Icon(Icons.add),
-        label: const Text('Nueva decisión'),
-      ),
     );
   }
 }

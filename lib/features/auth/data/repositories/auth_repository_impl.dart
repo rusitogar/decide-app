@@ -36,32 +36,46 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   AppUser? get currentUser => _toAppUser(_auth.currentUser);
 
-  /// Crea el perfil en `users/{uid}` si todavía no existe (no lo pisa si ya
-  /// está, por ejemplo si el usuario ya se había registrado antes con este
-  /// mismo email por otro método).
-  Future<void> _ensureProfile(User user, {String? displayName, String? photoUrl}) async {
+  /// Crea el perfil en `users/{uid}` (los datos por defecto solo si el doc
+  /// todavía no existe, para no pisar un perfil ya personalizado) y siempre
+  /// asegura que tenga un `username`.
+  ///
+  /// Lo del username es aparte a propósito: la Cloud Function
+  /// `onAuthUserCreate` también crea este documento (sin tocar username) y
+  /// puede llegar antes que este método, así que acá no alcanza con "si el
+  /// doc no existe, crealo con estos datos" — si no, un registro con
+  /// usuario elegido a mano se quedaría sin username porque el doc ya
+  /// existía cuando llegamos.
+  Future<void> _ensureProfile(User user, {String? displayName, String? photoUrl, String? username}) async {
     final ref = _firestore.collection('users').doc(user.uid);
     final snap = await ref.get();
-    if (snap.exists) return;
+    final data = snap.data();
 
-    // TODO(fase-1-blaze): mover esto a la Cloud Function onAuthUserCreate
-    // cuando se active Blaze, para no depender del cliente.
-    await ref.set({
-      'username': user.uid,
-      'displayName': displayName ?? user.displayName ?? '',
+    final payload = <String, dynamic>{};
+    if (!snap.exists) {
+      payload['displayName'] = displayName ?? user.displayName ?? '';
       // Fotos de Google/Microsoft son URLs externas (no Firebase Storage),
       // así que se pueden mostrar ya mismo sin necesitar Blaze.
-      'avatarUrl': photoUrl ?? user.photoURL ?? '',
-      'bio': '',
-      'followersCount': 0,
-      'followingCount': 0,
-      'decisionsCount': 0,
-      'createdAt': FieldValue.serverTimestamp(),
-    });
+      payload['avatarUrl'] = photoUrl ?? user.photoURL ?? '';
+      payload['bio'] = '';
+      payload['followersCount'] = 0;
+      payload['followingCount'] = 0;
+      payload['decisionsCount'] = 0;
+      payload['createdAt'] = FieldValue.serverTimestamp();
+    }
+
+    final hasUsername = (data?['username'] as String?)?.isNotEmpty ?? false;
+    if (username != null || !hasUsername) {
+      payload['username'] = username ?? user.uid;
+    }
+
+    if (payload.isNotEmpty) {
+      await ref.set(payload, SetOptions(merge: true));
+    }
   }
 
   @override
-  Future<Result<AppUser>> signUp({required String email, required String password}) async {
+  Future<Result<AppUser>> signUp({required String email, required String password, String? username}) async {
     try {
       final credential = await _auth.createUserWithEmailAndPassword(
         email: email,
@@ -70,7 +84,7 @@ class AuthRepositoryImpl implements AuthRepository {
       final user = credential.user;
       if (user == null) return const Result.failure(UnknownFailure());
 
-      await _ensureProfile(user);
+      await _ensureProfile(user, username: username);
 
       return Result.success(_toAppUser(user)!);
     } on FirebaseAuthException catch (e) {

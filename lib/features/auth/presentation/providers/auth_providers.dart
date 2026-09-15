@@ -22,9 +22,9 @@ class AuthController extends AsyncNotifier<void> {
     return result.when(success: (_) => null, failure: (f) => f);
   }
 
-  Future<Failure?> signUp({required String email, required String password}) async {
+  Future<Failure?> signUp({required String email, required String password, String? username}) async {
     state = const AsyncLoading();
-    final result = await ref.read(authRepositoryProvider).signUp(email: email, password: password);
+    final result = await ref.read(authRepositoryProvider).signUp(email: email, password: password, username: username);
     state = const AsyncData(null);
     return result.when(success: (_) => null, failure: (f) => f);
   }
