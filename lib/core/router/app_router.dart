@@ -8,11 +8,13 @@ import '../../features/decisions/presentation/screens/create_decision_screen.dar
 import '../../features/decisions/presentation/screens/decision_detail_screen.dart';
 import '../../features/decisions/presentation/screens/edit_decision_screen.dart';
 import '../../features/decisions/presentation/screens/user_decisions_screen.dart';
+import '../../features/decisions/presentation/screens/voting_history_screen.dart';
 import '../../features/moderation/presentation/screens/blocked_users_screen.dart';
 import '../../features/notifications/presentation/screens/notifications_screen.dart';
 import '../../features/social/presentation/screens/saved_decisions_screen.dart';
 import '../../features/users/presentation/screens/edit_profile_screen.dart';
 import '../../features/users/presentation/screens/profile_screen.dart';
+import '../../features/users/presentation/screens/stats_screen.dart';
 
 final goRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
@@ -37,6 +39,14 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/profile/:uid/decisions',
         builder: (context, state) => UserDecisionsScreen(uid: state.pathParameters['uid']!),
+      ),
+      GoRoute(
+        path: '/profile/:uid/history',
+        builder: (context, state) => VotingHistoryScreen(uid: state.pathParameters['uid']!),
+      ),
+      GoRoute(
+        path: '/profile/:uid/stats',
+        builder: (context, state) => StatsScreen(uid: state.pathParameters['uid']!),
       ),
       GoRoute(
         path: '/profile/:uid',

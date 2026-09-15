@@ -182,6 +182,31 @@ class DecisionRepositoryImpl implements DecisionRepository {
   }
 
   @override
+  Future<Result<List<Decision>>> getByIds(List<String> ids) async {
+    if (ids.isEmpty) return const Result.success([]);
+    try {
+      final docs = await Future.wait(ids.map((id) => _firestore.collection('decisions').doc(id).get()));
+      final decisions = docs.where((d) => d.exists).map(_decisionFromDoc).toList()
+        ..sort((a, b) => (b.createdAt ?? DateTime(0)).compareTo(a.createdAt ?? DateTime(0)));
+      return Result.success(decisions);
+    } catch (e, st) {
+      appLogger.e('getByIds failed', error: e, stackTrace: st);
+      return const Result.failure(NetworkFailure());
+    }
+  }
+
+  @override
+  Future<Result<void>> closeDecisionNow(String id) async {
+    try {
+      await _firestore.collection('decisions').doc(id).update({'closesAt': Timestamp.now()});
+      return const Result.success(null);
+    } catch (e, st) {
+      appLogger.e('closeDecisionNow failed', error: e, stackTrace: st);
+      return const Result.failure(UnknownFailure());
+    }
+  }
+
+  @override
   Future<Result<void>> updateDecision({
     required String id,
     required String title,

@@ -42,6 +42,27 @@ class DecisionDetailScreen extends ConsumerWidget {
     }
   }
 
+  Future<void> _confirmCloseNow(BuildContext context, WidgetRef ref) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('¿Cerrar esta votación?'),
+        content: const Text('No se van a poder sumar más votos. Esta acción no se puede deshacer.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
+          TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Cerrar votación')),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+
+    final failure = await ref.read(editDecisionControllerProvider.notifier).closeNow(id);
+    if (!context.mounted) return;
+    if (failure != null) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(failure.message)));
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final decisionAsync = ref.watch(decisionProvider(id));
@@ -152,14 +173,21 @@ class DecisionDetailScreen extends ConsumerWidget {
                   CommentsSection(decisionId: id, currentUid: currentUid),
                   if (isOwner) ...[
                     const SizedBox(height: 24),
-                    Row(
+                    Wrap(
+                      spacing: 12,
+                      runSpacing: 8,
                       children: [
                         OutlinedButton.icon(
                           onPressed: () => context.push('/decision/$id/edit'),
                           icon: const Icon(Icons.edit_outlined),
                           label: const Text('Editar'),
                         ),
-                        const SizedBox(width: 12),
+                        if (!decision.isClosed)
+                          OutlinedButton.icon(
+                            onPressed: () => _confirmCloseNow(context, ref),
+                            icon: const Icon(Icons.lock_outline),
+                            label: const Text('Cerrar votación'),
+                          ),
                         OutlinedButton.icon(
                           onPressed: () => _confirmDelete(context, ref),
                           icon: const Icon(Icons.delete_outline),

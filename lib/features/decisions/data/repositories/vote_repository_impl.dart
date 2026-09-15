@@ -51,6 +51,17 @@ class VoteRepositoryImpl implements VoteRepository {
   }
 
   @override
+  Future<Result<Set<String>>> getMyVotedDecisionIds(String userId) async {
+    try {
+      final snap = await _firestore.collection('votes').where('userId', isEqualTo: userId).get();
+      return Result.success(snap.docs.map((d) => d.data()['decisionId'] as String).toSet());
+    } catch (e, st) {
+      appLogger.e('getMyVotedDecisionIds failed', error: e, stackTrace: st);
+      return const Result.failure(NetworkFailure());
+    }
+  }
+
+  @override
   Future<Result<Map<String, int>>> getVoteCountsByOption(String decisionId) async {
     try {
       final optionsSnap =

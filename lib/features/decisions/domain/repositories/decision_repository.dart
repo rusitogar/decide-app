@@ -24,6 +24,14 @@ abstract interface class DecisionRepository {
 
   Future<Result<List<Decision>>> listByAuthor(String authorId);
 
+  /// Trae varias decisiones por id (usado para el historial de votos: no
+  /// hay una colección "voté esto", solo los ids en `votes`).
+  Future<Result<List<Decision>>> getByIds(List<String> ids);
+
+  /// El dueño cierra la votación ya mismo, tenga o no fecha de cierre
+  /// puesta. Reutiliza `closesAt`: lo deja en el momento actual.
+  Future<Result<void>> closeDecisionNow(String id);
+
   Future<Result<void>> updateDecision({
     required String id,
     required String title,

@@ -22,6 +22,11 @@ final voteCountsProvider = FutureProvider.autoDispose.family<Map<String, int>, S
   return result.when(success: (v) => v, failure: (_) => const {});
 });
 
+final myVotedDecisionIdsProvider = FutureProvider.autoDispose.family<Set<String>, String>((ref, userId) async {
+  final result = await ref.watch(voteRepositoryProvider).getMyVotedDecisionIds(userId);
+  return result.when(success: (v) => v, failure: (_) => const {});
+});
+
 class CastVoteController extends AsyncNotifier<void> {
   @override
   Future<void> build() async {}

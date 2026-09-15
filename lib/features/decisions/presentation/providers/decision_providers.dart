@@ -7,6 +7,7 @@ import '../../domain/entities/decision.dart';
 import '../../domain/entities/decision_option.dart';
 import '../../domain/entities/decision_stats.dart';
 import '../../domain/repositories/decision_repository.dart';
+import 'vote_providers.dart';
 
 final decisionRepositoryProvider = Provider<DecisionRepository>((ref) => DecisionRepositoryImpl());
 
@@ -31,6 +32,15 @@ final decisionStatsProvider = FutureProvider.autoDispose.family<DecisionStats, S
 final decisionsByAuthorProvider = FutureProvider.autoDispose.family<List<Decision>, String>((ref, authorId) async {
   final result = await ref.watch(decisionRepositoryProvider).listByAuthor(authorId);
   return result.when(success: (v) => v, failure: (_) => const []);
+});
+
+final votingHistoryProvider = FutureProvider.autoDispose.family<List<Decision>, String>((ref, userId) async {
+  final votedResult = await ref.watch(voteRepositoryProvider).getMyVotedDecisionIds(userId);
+  final votedIds = votedResult.when(success: (v) => v, failure: (_) => const <String>{});
+  if (votedIds.isEmpty) return const [];
+
+  final decisionsResult = await ref.watch(decisionRepositoryProvider).getByIds(votedIds.toList());
+  return decisionsResult.when(success: (v) => v, failure: (_) => const []);
 });
 
 class CreateDecisionController extends AsyncNotifier<void> {
@@ -91,6 +101,13 @@ class EditDecisionController extends AsyncNotifier<void> {
   Future<Failure?> delete(String id) async {
     state = const AsyncLoading();
     final result = await ref.read(decisionRepositoryProvider).deleteDecision(id);
+    state = const AsyncData(null);
+    return result.when(success: (_) => null, failure: (f) => f);
+  }
+
+  Future<Failure?> closeNow(String id) async {
+    state = const AsyncLoading();
+    final result = await ref.read(decisionRepositoryProvider).closeDecisionNow(id);
     state = const AsyncData(null);
     return result.when(success: (_) => null, failure: (f) => f);
   }

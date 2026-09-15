@@ -104,6 +104,22 @@ class ProfileScreen extends ConsumerWidget {
                     FollowButton(currentUid: currentUid, targetUid: uid),
                     BlockButton(ownerUid: currentUid, blockedUid: uid),
                   ],
+                  if (isOwnProfile) ...[
+                    const SizedBox(height: 20),
+                    const Divider(),
+                    ListTile(
+                      leading: const Icon(Icons.history),
+                      title: const Text('Historial de votos'),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: () => context.push('/profile/$uid/history'),
+                    ),
+                    ListTile(
+                      leading: const Icon(Icons.bar_chart_outlined),
+                      title: const Text('Estadísticas'),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: () => context.push('/profile/$uid/stats'),
+                    ),
+                  ],
                 ],
               ),
             ),
