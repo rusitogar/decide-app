@@ -285,11 +285,16 @@ class _OptionTile extends StatelessWidget {
                       const SizedBox(height: 5),
                       ClipRRect(
                         borderRadius: BorderRadius.circular(3),
-                        child: LinearProgressIndicator(
-                          value: pct,
-                          minHeight: 5,
-                          backgroundColor: Colors.white24,
-                          valueColor: const AlwaysStoppedAnimation(_brandBlue),
+                        child: TweenAnimationBuilder<double>(
+                          tween: Tween(begin: 0, end: pct),
+                          duration: const Duration(milliseconds: 500),
+                          curve: Curves.easeOutCubic,
+                          builder: (context, value, _) => LinearProgressIndicator(
+                            value: value,
+                            minHeight: 5,
+                            backgroundColor: Colors.white24,
+                            valueColor: const AlwaysStoppedAnimation(_brandBlue),
+                          ),
                         ),
                       ),
                       const SizedBox(height: 4),

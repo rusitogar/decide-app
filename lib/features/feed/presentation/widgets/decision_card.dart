@@ -16,6 +16,7 @@ class DecisionCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final authorAsync = ref.watch(userProfileProvider(decision.authorId));
     final statsAsync = ref.watch(decisionStatsProvider(decision.id));
+    final optionsAsync = ref.watch(decisionOptionsProvider(decision.id));
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
@@ -44,6 +45,39 @@ class DecisionCard extends ConsumerWidget {
               ),
               const SizedBox(height: 8),
               Text(decision.title, style: Theme.of(context).textTheme.titleMedium),
+              optionsAsync.when(
+                data: (options) {
+                  final withImages = options.where((o) => o.imageUrl.isNotEmpty).take(3).toList();
+                  if (withImages.isEmpty) return const SizedBox(height: 8);
+                  return Padding(
+                    padding: const EdgeInsets.only(top: 10, bottom: 2),
+                    child: Row(
+                      children: [
+                        for (final option in withImages) ...[
+                          Expanded(
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(10),
+                              child: AspectRatio(
+                                aspectRatio: 1.4,
+                                child: Image.network(
+                                  option.imageUrl,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, _, _) => Container(
+                                    color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          if (option != withImages.last) const SizedBox(width: 8),
+                        ],
+                      ],
+                    ),
+                  );
+                },
+                loading: () => const SizedBox(height: 8),
+                error: (_, _) => const SizedBox(height: 8),
+              ),
               const SizedBox(height: 8),
               Row(
                 children: [

@@ -174,7 +174,12 @@ class _ResultBar extends StatelessWidget {
         const SizedBox(height: 4),
         ClipRRect(
           borderRadius: BorderRadius.circular(4),
-          child: LinearProgressIndicator(value: pct, minHeight: 8),
+          child: TweenAnimationBuilder<double>(
+            tween: Tween(begin: 0, end: pct),
+            duration: const Duration(milliseconds: 500),
+            curve: Curves.easeOutCubic,
+            builder: (context, value, _) => LinearProgressIndicator(value: value, minHeight: 8),
+          ),
         ),
       ],
     );

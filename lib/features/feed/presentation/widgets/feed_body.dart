@@ -19,10 +19,18 @@ class _FeedBodyState extends ConsumerState<FeedBody> with SingleTickerProviderSt
   late final TabController _tabController;
   String? _selectedCategory;
 
+  static const _discoverTabIndex = 0;
+
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
+    // Redibuja al cambiar de pestaña, para esconder los chips de categoría
+    // arriba de Descubrir (no tiene sentido ahí, y afloja la pantalla
+    // completa que buscamos para esa pestaña).
+    _tabController.addListener(() {
+      if (mounted) setState(() {});
+    });
   }
 
   @override
@@ -34,6 +42,7 @@ class _FeedBodyState extends ConsumerState<FeedBody> with SingleTickerProviderSt
   @override
   Widget build(BuildContext context) {
     final categoriesAsync = ref.watch(categoriesProvider);
+    final onDiscoverTab = _tabController.index == _discoverTabIndex;
 
     return Column(
       children: [
@@ -42,46 +51,48 @@ class _FeedBodyState extends ConsumerState<FeedBody> with SingleTickerProviderSt
           isScrollable: true,
           tabAlignment: TabAlignment.start,
           tabs: const [
+            Tab(text: 'Descubrir'),
             Tab(text: 'Para vos'),
             Tab(text: 'Tendencias'),
             Tab(text: 'Siguiendo'),
-            Tab(text: 'Descubrir'),
           ],
         ),
-        categoriesAsync.when(
-          data: (categories) => SizedBox(
-            height: 48,
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
-                  child: ChoiceChip(
-                    label: const Text('Todas'),
-                    selected: _selectedCategory == null,
-                    onSelected: (_) => setState(() => _selectedCategory = null),
-                  ),
-                ),
-                for (final category in categories)
+        if (!onDiscoverTab)
+          categoriesAsync.when(
+            data: (categories) => SizedBox(
+              height: 48,
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                children: [
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 4),
                     child: ChoiceChip(
-                      label: Text(category.name),
-                      selected: _selectedCategory == category.id,
-                      onSelected: (_) => setState(() => _selectedCategory = category.id),
+                      label: const Text('Todas'),
+                      selected: _selectedCategory == null,
+                      onSelected: (_) => setState(() => _selectedCategory = null),
                     ),
                   ),
-              ],
+                  for (final category in categories)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      child: ChoiceChip(
+                        label: Text(category.name),
+                        selected: _selectedCategory == category.id,
+                        onSelected: (_) => setState(() => _selectedCategory = category.id),
+                      ),
+                    ),
+                ],
+              ),
             ),
+            loading: () => const SizedBox.shrink(),
+            error: (_, _) => const SizedBox.shrink(),
           ),
-          loading: () => const SizedBox.shrink(),
-          error: (_, _) => const SizedBox.shrink(),
-        ),
         Expanded(
           child: TabBarView(
             controller: _tabController,
             children: [
+              DiscoverFeed(currentUid: widget.currentUid),
               FeedList(
                 decisionsAsync: _selectedCategory == null
                     ? ref.watch(recentFeedProvider)
@@ -98,7 +109,6 @@ class _FeedBodyState extends ConsumerState<FeedBody> with SingleTickerProviderSt
                       decisionsAsync: ref.watch(followingFeedProvider(widget.currentUid!)),
                       emptyMessage: 'Seguí a otros usuarios para ver sus decisiones acá.',
                     ),
-              DiscoverFeed(currentUid: widget.currentUid),
             ],
           ),
         ),

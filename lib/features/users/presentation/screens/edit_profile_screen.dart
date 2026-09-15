@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/storage/image_upload_service.dart';
+import '../../../../core/theme/theme_mode_provider.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../providers/user_providers.dart';
 
@@ -177,6 +178,26 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                         decoration: const InputDecoration(labelText: 'Biografía'),
                         maxLines: 3,
                         maxLength: 160,
+                      ),
+                      const SizedBox(height: 24),
+                      const Divider(),
+                      const SizedBox(height: 16),
+                      Text('Tema', style: Theme.of(context).textTheme.labelLarge),
+                      const SizedBox(height: 8),
+                      Consumer(
+                        builder: (context, ref, _) {
+                          final themeMode = ref.watch(themeModeProvider);
+                          return SegmentedButton<ThemeMode>(
+                            segments: const [
+                              ButtonSegment(value: ThemeMode.system, label: Text('Sistema'), icon: Icon(Icons.brightness_auto)),
+                              ButtonSegment(value: ThemeMode.light, label: Text('Claro'), icon: Icon(Icons.light_mode)),
+                              ButtonSegment(value: ThemeMode.dark, label: Text('Oscuro'), icon: Icon(Icons.dark_mode)),
+                            ],
+                            selected: {themeMode},
+                            onSelectionChanged: (selection) =>
+                                ref.read(themeModeProvider.notifier).setThemeMode(selection.first),
+                          );
+                        },
                       ),
                       const SizedBox(height: 8),
                       FilledButton(
